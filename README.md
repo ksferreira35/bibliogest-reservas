@@ -25,5 +25,3 @@ No IntelliJ, abra o projeto pelo `pom.xml` com o JDK 21. Na configuração de ex
 - [Swagger de Reservas](http://localhost:8081/reservas/swagger-ui/index.html)
 
 No Swagger, use **Authorize** com o `access_token` da sua própria conta de teste do BiblioGest. Para rodar os testes automatizados, use `mvn verify`.
-
-Veja [DEPLOYMENT.md](DEPLOYMENT.md) para a implantação no cluster.
