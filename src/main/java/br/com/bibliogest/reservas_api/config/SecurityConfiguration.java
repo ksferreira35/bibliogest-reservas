@@ -37,6 +37,9 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/admin/**").hasRole("BIBLIOTECARIO")
                     .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("LEITOR", "BIBLIOTECARIO")
                     .requestMatchers(HttpMethod.HEAD, "/api/**").hasAnyRole("LEITOR", "BIBLIOTECARIO")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/reservas").hasRole("LEITOR")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/reservas/*/cancelar")
+                        .hasAnyRole("LEITOR", "BIBLIOTECARIO")
                     .requestMatchers("/api/**").hasRole("BIBLIOTECARIO")
                     .anyRequest().denyAll();
             })

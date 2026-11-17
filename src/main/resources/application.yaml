@@ -18,6 +18,9 @@ spring:
           issuer-uri: ${OIDC_ISSUER_URI}
           jwk-set-uri: ${OIDC_JWK_SET_URI}
           audiences: bibliogest-reservas
+bibliogest:
+  acervo:
+    base-url: ${ACERVO_BASE_URL:http://acervo:8080/acervo}
 server:
   port: 8080
   servlet:
