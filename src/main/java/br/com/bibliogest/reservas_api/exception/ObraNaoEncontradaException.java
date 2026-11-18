@@ -1,4 +1,4 @@
-package br.com.bibliogest.reservas_api.acervo;
+package br.com.bibliogest.reservas_api.exception;
 
 public class ObraNaoEncontradaException extends RuntimeException {
     public ObraNaoEncontradaException() {

@@ -1,4 +1,4 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.controller;
 
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -7,12 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import br.com.bibliogest.reservas_api.acervo.AcervoIndisponivelException;
-import br.com.bibliogest.reservas_api.acervo.ObraNaoEncontradaException;
 import br.com.bibliogest.reservas_api.config.ClockConfiguration;
 import br.com.bibliogest.reservas_api.config.SecurityConfiguration;
+import br.com.bibliogest.reservas_api.exception.AcervoIndisponivelException;
+import br.com.bibliogest.reservas_api.exception.ObraNaoEncontradaException;
+import br.com.bibliogest.reservas_api.service.ReservaService;
 import br.com.bibliogest.reservas_api.web.ApiExceptionHandler;
-import br.com.bibliogest.reservas_api.web.DisponibilidadeController;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;

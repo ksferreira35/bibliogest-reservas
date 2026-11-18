@@ -1,8 +1,9 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.entities;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import br.com.bibliogest.reservas_api.exception.TransicaoInvalidaException;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 

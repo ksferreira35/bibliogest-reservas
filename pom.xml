@@ -6,34 +6,38 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.2</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>br.com.bibliogest</groupId>
 	<artifactId>reservas-api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
+	<version>0.1.2</version>
+	<name>BiblioGest - API de Reservas</name>
+	<description>Microsserviço de reservas, disponibilidade, retirada e devolução de exemplares físicos do BiblioGest.</description>
+	<url>https://github.com/ksferreira35/bibliogest-reservas</url>
 	<developers>
-		<developer/>
+		<developer>
+			<id>mateus-alarcao</id>
+			<name>Mateus Alarcão</name>
+		</developer>
+		<developer>
+			<id>ksferreira35</id>
+			<name>Kaiky Ferreira</name>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/ksferreira35/bibliogest-reservas.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/ksferreira35/bibliogest-reservas.git</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/ksferreira35/bibliogest-reservas</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -122,8 +126,56 @@
 	</dependencies>
 
 	<build>
-        <finalName>app</finalName>
+		<finalName>app</finalName>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.6.0</version>
+				<dependencies>
+					<dependency>
+						<groupId>com.puppycrawl.tools</groupId>
+						<artifactId>checkstyle</artifactId>
+						<version>10.26.1</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+					<includeResources>false</includeResources>
+					<includeTestResources>false</includeTestResources>
+					<consoleOutput>true</consoleOutput>
+					<failOnViolation>true</failOnViolation>
+					<checkstyleRules>
+						<module name="Checker">
+							<property name="charset" value="UTF-8"/>
+							<module name="NewlineAtEndOfFile"/>
+							<module name="TreeWalker">
+								<module name="UnusedImports"/>
+								<module name="RedundantImport"/>
+								<module name="AvoidStarImport"/>
+								<module name="OuterTypeFilename"/>
+								<module name="OneTopLevelClass"/>
+								<module name="ModifierOrder"/>
+								<module name="EmptyStatement"/>
+								<module name="EqualsHashCode"/>
+								<module name="FallThrough"/>
+								<module name="MethodName"/>
+								<module name="MemberName"/>
+								<module name="ParameterName"/>
+							</module>
+						</module>
+					</checkstyleRules>
+				</configuration>
+				<executions>
+					<execution>
+						<id>lint</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

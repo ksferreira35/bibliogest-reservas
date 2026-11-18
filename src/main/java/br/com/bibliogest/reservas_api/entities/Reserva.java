@@ -1,5 +1,6 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.entities;
 
+import br.com.bibliogest.reservas_api.exception.TransicaoInvalidaException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,7 +42,6 @@ public class Reserva {
     @Column(name = "cancelada_em")
     private Instant canceladaEm;
 
-    /** Bloqueio otimista: transições concorrentes sobre a mesma reserva falham em vez de se sobrepor. */
     @Version
     @Column(name = "versao")
     private Long versao;

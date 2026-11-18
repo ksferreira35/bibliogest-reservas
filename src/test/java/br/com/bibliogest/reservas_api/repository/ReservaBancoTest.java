@@ -1,11 +1,15 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import br.com.bibliogest.reservas_api.acervo.AcervoClient;
+import br.com.bibliogest.reservas_api.client.AcervoClient;
+import br.com.bibliogest.reservas_api.entities.EstadoReserva;
+import br.com.bibliogest.reservas_api.entities.Reserva;
+import br.com.bibliogest.reservas_api.exception.ExemplarIndisponivelException;
+import br.com.bibliogest.reservas_api.service.ReservaService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -19,10 +23,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-/**
- * Roda contra um PostgreSQL de verdade (Testcontainers, exige Docker). A migration Flyway cria a tabela e o
- * índice único parcial; só o Acervo é simulado.
- */
 @SpringBootTest(properties = {
     "spring.datasource.url=jdbc:tc:postgresql:17.12-bookworm:///bibliogest_reservas",
     "spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver",

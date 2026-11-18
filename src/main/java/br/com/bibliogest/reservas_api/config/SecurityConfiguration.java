@@ -1,5 +1,6 @@
 package br.com.bibliogest.reservas_api.config;
 
+import jakarta.servlet.DispatcherType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class SecurityConfiguration {
                 }
 
                 auth
+                    .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                     .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                     .requestMatchers("/api/admin/**").hasRole("BIBLIOTECARIO")
                     .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("LEITOR", "BIBLIOTECARIO")
