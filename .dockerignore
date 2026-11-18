@@ -56,3 +56,7 @@ deploy
 
 # Backups do editor
 **/*~
+
+# Documentação
+README.md
+**/README.md
