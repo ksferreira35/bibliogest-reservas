@@ -1,4 +1,4 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.exception;
 
 public class ExemplarIndisponivelException extends RuntimeException {
     public ExemplarIndisponivelException() {

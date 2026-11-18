@@ -1,6 +1,12 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.service;
 
-import br.com.bibliogest.reservas_api.acervo.AcervoClient;
+import br.com.bibliogest.reservas_api.client.AcervoClient;
+import br.com.bibliogest.reservas_api.entities.EstadoReserva;
+import br.com.bibliogest.reservas_api.entities.Reserva;
+import br.com.bibliogest.reservas_api.exception.ExemplarIndisponivelException;
+import br.com.bibliogest.reservas_api.exception.ExemplarNaoEncontradoException;
+import br.com.bibliogest.reservas_api.exception.ReservaNaoEncontradaException;
+import br.com.bibliogest.reservas_api.repository.ReservaRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Collection;
@@ -26,7 +32,6 @@ public class ReservaService {
         this.clock = clock;
     }
 
-    /** A chamada ao Acervo fica fora da transação do banco. */
     public Reserva criar(String leitorId, String obraId, String exemplarId, String bearerToken) {
         if (!acervo.exemplarPertenceAObra(obraId, exemplarId, bearerToken)) {
             throw new ExemplarNaoEncontradoException();
@@ -34,7 +39,6 @@ public class ReservaService {
         try {
             return repository.saveAndFlush(new Reserva(leitorId, obraId, exemplarId, agora()));
         } catch (DataIntegrityViolationException e) {
-            // índice único parcial: outra reserva ativa já bloqueia o exemplar
             throw new ExemplarIndisponivelException();
         }
     }
@@ -43,7 +47,7 @@ public class ReservaService {
     public Reserva buscar(UUID id, String leitorId, boolean bibliotecario) {
         var reserva = repository.findById(id).orElseThrow(ReservaNaoEncontradaException::new);
         if (!bibliotecario && !reserva.getLeitorId().equals(leitorId)) {
-            throw new ReservaNaoEncontradaException(); // não revela reservas de outros leitores
+            throw new ReservaNaoEncontradaException();
         }
         return reserva;
     }
@@ -82,16 +86,11 @@ public class ReservaService {
             : repository.findByEstadoOrderByCriadaEmDesc(estado, page);
     }
 
-    /**
-     * Exemplares da obra segundo o Acervo, cada um com true se está livre e false se há reserva ativa.
-     * A chamada ao Acervo fica fora da transação do banco.
-     */
     public Map<String, Boolean> disponibilidadeDaObra(String obraId, String bearerToken) {
         var exemplarIds = acervo.exemplaresDaObra(obraId, bearerToken);
         return exemplarIds.isEmpty() ? Map.of() : disponibilidade(exemplarIds);
     }
 
-    /** Para cada id, true se não há reserva ativa. */
     @Transactional(readOnly = true)
     public Map<String, Boolean> disponibilidade(Collection<String> exemplarIds) {
         var bloqueados = new HashSet<>(repository.findExemplaresBloqueados(exemplarIds, EstadoReserva.ATIVOS));

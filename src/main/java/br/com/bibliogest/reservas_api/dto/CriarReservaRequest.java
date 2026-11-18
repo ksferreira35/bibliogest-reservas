@@ -1,4 +1,4 @@
-package br.com.bibliogest.reservas_api.web;
+package br.com.bibliogest.reservas_api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

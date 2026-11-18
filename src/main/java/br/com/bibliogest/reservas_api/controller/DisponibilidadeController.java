@@ -1,6 +1,7 @@
-package br.com.bibliogest.reservas_api.web;
+package br.com.bibliogest.reservas_api.controller;
 
-import br.com.bibliogest.reservas_api.reserva.ReservaService;
+import br.com.bibliogest.reservas_api.dto.DisponibilidadeResponse;
+import br.com.bibliogest.reservas_api.service.ReservaService;
 import java.util.regex.Pattern;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,7 +21,6 @@ public class DisponibilidadeController {
         this.service = service;
     }
 
-    /** Somente as cópias da obra no Acervo que estão livres (sem reserva ativa). */
     @GetMapping("/{obraId}/disponibilidade")
     public DisponibilidadeResponse disponibilidade(@PathVariable String obraId, Authentication auth) {
         if (!ID.matcher(obraId).matches()) {

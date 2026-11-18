@@ -1,4 +1,4 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,9 +7,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import br.com.bibliogest.reservas_api.acervo.AcervoClient;
-import br.com.bibliogest.reservas_api.acervo.AcervoIndisponivelException;
-import br.com.bibliogest.reservas_api.acervo.ObraNaoEncontradaException;
+import br.com.bibliogest.reservas_api.client.AcervoClient;
+import br.com.bibliogest.reservas_api.entities.EstadoReserva;
+import br.com.bibliogest.reservas_api.entities.Reserva;
+import br.com.bibliogest.reservas_api.exception.AcervoIndisponivelException;
+import br.com.bibliogest.reservas_api.exception.ExemplarIndisponivelException;
+import br.com.bibliogest.reservas_api.exception.ExemplarNaoEncontradoException;
+import br.com.bibliogest.reservas_api.exception.ObraNaoEncontradaException;
+import br.com.bibliogest.reservas_api.exception.ReservaNaoEncontradaException;
+import br.com.bibliogest.reservas_api.repository.ReservaRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;

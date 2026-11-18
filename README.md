@@ -26,6 +26,10 @@ No IntelliJ, abra o projeto pelo `pom.xml` com o JDK 21. Na configuração de ex
 
 No Swagger, use **Authorize** com o `access_token` da sua própria conta de teste do BiblioGest. Para rodar os testes automatizados, use `mvn verify`. Os testes com PostgreSQL real (`ReservaBancoTest`) sobem um contêiner pelo Testcontainers, então o Docker precisa estar rodando.
 
+Para consultar o Acervo publicado durante o desenvolvimento, o `.env.example` define `ACERVO_BASE_URL=https://bibliogest.ksferreira.org/acervo`. No RKE2, o Deployment usa o Service interno `http://acervo:8080/acervo`.
+
+O CI executa os testes antes do empacotamento. O Dockerfile gera o pacote com `-DskipTests`, pois o teste de banco depende do Docker disponível no ambiente de testes.
+
 ## Endpoints de reservas
 
 Prefixo público: `/reservas/api/v1`. O leitor vem da claim `sub` do token. O token do leitor é repassado ao Acervo na criação e na consulta de disponibilidade, definido por `ACERVO_BASE_URL`.
@@ -39,4 +43,4 @@ Prefixo público: `/reservas/api/v1`. O leitor vem da claim `sub` do token. O to
 | `POST /reservas/{id}/cancelar` | dono ou BIBLIOTECARIO | Só em `AGUARDANDO_RETIRADA`. |
 | `POST /reservas/{id}/retirada` | BIBLIOTECARIO | `AGUARDANDO_RETIRADA` → `RETIRADA`. |
 | `POST /reservas/{id}/devolucao` | BIBLIOTECARIO | `RETIRADA` → `FINALIZADA`. |
-| `GET /obras/{obraId}/disponibilidade` | LEITOR, BIBLIOTECARIO | Somente as cópias da obra no Acervo que estão livres: `{"obraId":"1","exemplares":[{"exemplarId":"2","disponivel":true}]}`. 404 se a obra não existe, 503 se o Acervo não responde. |
+| `GET /obras/{obraId}/disponibilidade` | LEITOR, BIBLIOTECARIO | Somente as cópias da obra no Acervo que estão livres: `{"obraId":"uuid-da-obra","exemplares":[{"exemplarId":"uuid-do-exemplar","disponivel":true}]}`. 404 se a obra não existe, 503 se o Acervo não responde. |

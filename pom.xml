@@ -6,34 +6,38 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.2</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>br.com.bibliogest</groupId>
 	<artifactId>reservas-api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
+	<version>0.1.2</version>
+	<name>BiblioGest - API de Reservas</name>
+	<description>Microsserviço de reservas, disponibilidade, retirada e devolução de exemplares físicos do BiblioGest.</description>
+	<url>https://github.com/ksferreira35/bibliogest-reservas</url>
 	<developers>
-		<developer/>
+		<developer>
+			<id>mateus-alarcao</id>
+			<name>Mateus Alarcão</name>
+		</developer>
+		<developer>
+			<id>ksferreira35</id>
+			<name>Kaiky Ferreira</name>
+		</developer>
 	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/ksferreira35/bibliogest-reservas.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/ksferreira35/bibliogest-reservas.git</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/ksferreira35/bibliogest-reservas</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -122,7 +126,7 @@
 	</dependencies>
 
 	<build>
-        <finalName>app</finalName>
+		<finalName>app</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

@@ -1,4 +1,4 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.exception;
 
 public class ExemplarNaoEncontradoException extends RuntimeException {
     public ExemplarNaoEncontradoException() {

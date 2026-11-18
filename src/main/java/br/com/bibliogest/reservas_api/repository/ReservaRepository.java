@@ -1,5 +1,7 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.repository;
 
+import br.com.bibliogest.reservas_api.entities.EstadoReserva;
+import br.com.bibliogest.reservas_api.entities.Reserva;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package br.com.bibliogest.reservas_api.reserva;
+package br.com.bibliogest.reservas_api.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,8 +12,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import br.com.bibliogest.reservas_api.config.ClockConfiguration;
 import br.com.bibliogest.reservas_api.config.SecurityConfiguration;
+import br.com.bibliogest.reservas_api.entities.EstadoReserva;
+import br.com.bibliogest.reservas_api.entities.Reserva;
+import br.com.bibliogest.reservas_api.exception.ExemplarIndisponivelException;
+import br.com.bibliogest.reservas_api.exception.ReservaNaoEncontradaException;
+import br.com.bibliogest.reservas_api.exception.TransicaoInvalidaException;
+import br.com.bibliogest.reservas_api.service.ReservaService;
 import br.com.bibliogest.reservas_api.web.ApiExceptionHandler;
-import br.com.bibliogest.reservas_api.web.ReservaController;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +78,9 @@ class ReservaControllerTest {
     void corpoInvalidoRetorna400() throws Exception {
         mvc.perform(post("/api/v1/reservas").header("Authorization", "Bearer reader")
                 .contentType(MediaType.APPLICATION_JSON).content("{\"obraId\":\"../x\",\"exemplarId\":\"\"}"))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.errors").isArray());
         verify(service, never()).criar(any(), any(), any(), any());
     }
 
@@ -142,6 +149,22 @@ class ReservaControllerTest {
 
         mvc.perform(get("/api/v1/reservas/minhas").header("Authorization", "Bearer reader"))
             .andExpect(status().isOk()).andExpect(jsonPath("$[0].leitorId").value("user-123"));
+    }
+
+    @Test
+    void jsonMalformadoRetorna400() throws Exception {
+        mvc.perform(post("/api/v1/reservas").header("Authorization", "Bearer reader")
+                .contentType(MediaType.APPLICATION_JSON).content("{\"obraId\":"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400));
+        verify(service, never()).criar(any(), any(), any(), any());
+    }
+
+    @Test
+    void idDeReservaInvalidoRetorna400() throws Exception {
+        mvc.perform(get("/api/v1/reservas/id-invalido").header("Authorization", "Bearer reader"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400));
     }
 
     private Jwt token(String role) {

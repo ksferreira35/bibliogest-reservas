@@ -1,7 +1,9 @@
-package br.com.bibliogest.reservas_api.web;
+package br.com.bibliogest.reservas_api.controller;
 
-import br.com.bibliogest.reservas_api.reserva.EstadoReserva;
-import br.com.bibliogest.reservas_api.reserva.ReservaService;
+import br.com.bibliogest.reservas_api.dto.CriarReservaRequest;
+import br.com.bibliogest.reservas_api.dto.ReservaResponse;
+import br.com.bibliogest.reservas_api.entities.EstadoReserva;
+import br.com.bibliogest.reservas_api.service.ReservaService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;

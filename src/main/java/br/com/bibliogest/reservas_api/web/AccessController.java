@@ -6,7 +6,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Endpoints sem efeitos colaterais para verificar a integração de autenticação. */
 @RestController
 public class AccessController {
     @GetMapping("/api/status")
