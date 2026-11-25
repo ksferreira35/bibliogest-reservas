@@ -1,0 +1,1 @@
+ALTER TABLE reserva ADD COLUMN leitor_nome VARCHAR(255);

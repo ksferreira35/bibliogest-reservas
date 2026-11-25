@@ -48,43 +48,53 @@ class ReservaBancoTest {
     }
 
     @Test
-    void mesmaCopiaBloqueiaSegundaReservaEOutraCopiaContinuaLivre() {
-        service.criar("leitor-a", OBRA, "e1", TOKEN);
+    void nomeDoSolicitanteEGravadoERetornadoNasConsultas() {
+        var reserva = service.criar("leitor-a", "Kaiky Ferreira", OBRA, "e1", TOKEN);
+        assertThat(repository.findById(reserva.getId()).orElseThrow().getLeitorNome()).isEqualTo("Kaiky Ferreira");
+        assertThat(service.minhas("leitor-a", 0, 20)).extracting(Reserva::getLeitorNome).containsExactly("Kaiky Ferreira");
+        assertThat(service.todas(null, 0, 20)).extracting(Reserva::getLeitorNome).containsExactly("Kaiky Ferreira");
+        assertThat(service.registrarRetirada(reserva.getId()).getLeitorNome()).isEqualTo("Kaiky Ferreira");
+        assertThat(service.finalizar(reserva.getId()).getLeitorNome()).isEqualTo("Kaiky Ferreira");
+    }
 
-        assertThatThrownBy(() -> service.criar("leitor-b", OBRA, "e1", TOKEN))
+    @Test
+    void mesmaCopiaBloqueiaSegundaReservaEOutraCopiaContinuaLivre() {
+        service.criar("leitor-a", null, OBRA, "e1", TOKEN);
+
+        assertThatThrownBy(() -> service.criar("leitor-b", null, OBRA, "e1", TOKEN))
             .isInstanceOf(ExemplarIndisponivelException.class);
         assertThat(repository.count()).isEqualTo(1);
         assertThat(service.disponibilidadeDaObra(OBRA, TOKEN))
             .containsEntry("e1", false).containsEntry("e2", true);
-        assertThat(service.criar("leitor-b", OBRA, "e2", TOKEN).getEstado())
+        assertThat(service.criar("leitor-b", null, OBRA, "e2", TOKEN).getEstado())
             .isEqualTo(EstadoReserva.AGUARDANDO_RETIRADA);
     }
 
     @Test
     void copiaVoltaAFicarDisponivelDepoisDoCancelamento() {
-        var reserva = service.criar("leitor-a", OBRA, "e1", TOKEN);
+        var reserva = service.criar("leitor-a", null, OBRA, "e1", TOKEN);
         assertThat(service.disponibilidadeDaObra(OBRA, TOKEN)).containsEntry("e1", false);
 
         service.cancelar(reserva.getId(), "leitor-a", false);
 
         assertThat(service.disponibilidadeDaObra(OBRA, TOKEN)).containsEntry("e1", true);
-        assertThat(service.criar("leitor-b", OBRA, "e1", TOKEN).getEstado())
+        assertThat(service.criar("leitor-b", null, OBRA, "e1", TOKEN).getEstado())
             .isEqualTo(EstadoReserva.AGUARDANDO_RETIRADA);
     }
 
     @Test
     void copiaContinuaBloqueadaNaRetiradaEVoltaAFicarDisponivelDepoisDaDevolucao() {
-        var reserva = service.criar("leitor-a", OBRA, "e1", TOKEN);
+        var reserva = service.criar("leitor-a", null, OBRA, "e1", TOKEN);
 
         service.registrarRetirada(reserva.getId());
         assertThat(service.disponibilidadeDaObra(OBRA, TOKEN)).containsEntry("e1", false);
-        assertThatThrownBy(() -> service.criar("leitor-b", OBRA, "e1", TOKEN))
+        assertThatThrownBy(() -> service.criar("leitor-b", null, OBRA, "e1", TOKEN))
             .isInstanceOf(ExemplarIndisponivelException.class);
 
         service.finalizar(reserva.getId());
 
         assertThat(service.disponibilidadeDaObra(OBRA, TOKEN)).containsEntry("e1", true);
-        assertThat(service.criar("leitor-b", OBRA, "e1", TOKEN).getEstado())
+        assertThat(service.criar("leitor-b", null, OBRA, "e1", TOKEN).getEstado())
             .isEqualTo(EstadoReserva.AGUARDANDO_RETIRADA);
     }
 
@@ -98,7 +108,7 @@ class ReservaBancoTest {
                 tentativas.add(pool.submit(() -> {
                     largada.await();
                     try {
-                        return service.criar(leitor, OBRA, "e1", TOKEN);
+                        return service.criar(leitor, null, OBRA, "e1", TOKEN);
                     } catch (ExemplarIndisponivelException e) {
                         return e;
                     }

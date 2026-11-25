@@ -7,10 +7,10 @@ import java.util.UUID;
 
 public record ReservaResponse(
     UUID id, String leitorId, String obraId, String exemplarId, EstadoReserva estado,
-    Instant criadaEm, Instant retiradaEm, Instant finalizadaEm, Instant canceladaEm
+    Instant criadaEm, Instant retiradaEm, Instant finalizadaEm, Instant canceladaEm, String leitorNome
 ) {
     public static ReservaResponse de(Reserva r) {
         return new ReservaResponse(r.getId(), r.getLeitorId(), r.getObraId(), r.getExemplarId(), r.getEstado(),
-            r.getCriadaEm(), r.getRetiradaEm(), r.getFinalizadaEm(), r.getCanceladaEm());
+            r.getCriadaEm(), r.getRetiradaEm(), r.getFinalizadaEm(), r.getCanceladaEm(), r.getLeitorNome());
     }
 }

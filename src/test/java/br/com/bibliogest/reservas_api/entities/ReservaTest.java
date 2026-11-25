@@ -11,7 +11,7 @@ class ReservaTest {
     private final Instant agora = Instant.parse("2026-11-17T12:00:00Z");
 
     private Reserva nova() {
-        return new Reserva("leitor", "obra", "ex1", agora);
+        return new Reserva("leitor", null, "obra", "ex1", agora);
     }
 
     @Test

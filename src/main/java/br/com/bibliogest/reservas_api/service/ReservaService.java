@@ -32,12 +32,12 @@ public class ReservaService {
         this.clock = clock;
     }
 
-    public Reserva criar(String leitorId, String obraId, String exemplarId, String bearerToken) {
+    public Reserva criar(String leitorId, String leitorNome, String obraId, String exemplarId, String bearerToken) {
         if (!acervo.exemplarPertenceAObra(obraId, exemplarId, bearerToken)) {
             throw new ExemplarNaoEncontradoException();
         }
         try {
-            return repository.saveAndFlush(new Reserva(leitorId, obraId, exemplarId, agora()));
+            return repository.saveAndFlush(new Reserva(leitorId, leitorNome, obraId, exemplarId, agora()));
         } catch (DataIntegrityViolationException e) {
             throw new ExemplarIndisponivelException();
         }

@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>br.com.bibliogest</groupId>
 	<artifactId>reservas-api</artifactId>
-	<version>0.1.2</version>
+	<version>0.1.3</version>
 	<name>BiblioGest - API de Reservas</name>
 	<description>Microsserviço de reservas, disponibilidade, retirada e devolução de exemplares físicos do BiblioGest.</description>
 	<url>https://github.com/ksferreira35/bibliogest-reservas</url>

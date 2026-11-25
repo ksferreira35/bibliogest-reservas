@@ -75,7 +75,7 @@ lint (Checkstyle) → testes + cobertura (clean verify) → empacotamento
 
 Os jobs usam `needs`, portanto o empacotamento não começa quando um teste, lint ou limite de cobertura falhar. O último job usa `-DskipTests package`: ele empacota o mesmo código já verificado pelo job anterior, sem tentar validar cobertura em uma máquina sem os dados da execução anterior.
 
-O resumo da execução mostra as porcentagens de linhas e branches. Em **Actions → execução → Artifacts → coverage-and-tests**, baixe o relatório HTML e os resultados JUnit. Os arquivos são publicados também em caso de reprovação e ficam disponíveis por 14 dias. O workflow roda em push para `main` e esta branch de implementação, além de pull requests para `main`.
+O resumo da execução mostra as porcentagens de linhas e branches. Em **Actions → execução → Artifacts → coverage-and-tests**, baixe o relatório HTML e os resultados JUnit. Os arquivos são publicados também em caso de reprovação e ficam disponíveis por 14 dias. O workflow roda em push para `main`, branches `feature/**` e `fix/**`, além de pull requests para `main`.
 
 Os testes não usam credenciais de produção e não fazem login em contas reais. Os testes de segurança fornecem JWTs simulados ao decoder de teste e verificam roles válidas, ausência de roles e claims malformadas. Somente `LEITOR` e `BIBLIOTECARIO`, com os nomes exatos, recebem permissões da aplicação. O marcador de autenticação Bearer do Spring não equivale a uma role administrativa.
 
@@ -94,3 +94,13 @@ A CSP é entregue pelo Nginx do frontend, junto do documento HTML. Esta API reto
 As suítes verificam criação, cancelamento pelo dono/bibliotecário, proibição de acessar reservas de outra pessoa, retirada/devolução, estados inválidos e disponibilidade. Os testes do cliente HTTP simulam o Acervo em um servidor local e conferem o repasse do Bearer e o tratamento de respostas inválidas ou indisponíveis.
 
 `ReservaBancoTest` usa PostgreSQL real em contêiner via Testcontainers para verificar as restrições de reservas ativas e concorrência. O Docker precisa estar disponível para a suíte completa, inclusive no CI. Não use a base de produção para esses testes. Os demais testes usam mocks ou configurações isoladas.
+
+## Nome do solicitante
+
+As respostas de reservas incluem `leitorNome`, além de `leitorId`. Ao criar a reserva, a API extrai o nome das claims `name` ou `given_name`/`family_name` do JWT já validado pelo Spring Security. O cliente envia somente `obraId` e `exemplarId`; nomes ou IDs de leitor enviados no corpo não definem a identidade da reserva. O `sub` continua sendo a referência para propriedade e autorização.
+
+A migration `V2__add_nome_leitor_to_reserva.sql` acrescenta `leitor_nome`, com até 255 caracteres. É um registro do nome no momento da solicitação, preservado nas transições de estado. Alterar o nome no Keycloak não reescreve automaticamente o histórico. Na ausência dessas claims, o nome fica nulo; e-mail e UUID não são usados como nome.
+
+A coluna aceita `null` para preservar reservas anteriores. No deploy desta mudança, os nomes antigos podem ser preenchidos por uma rotina administrativa pontual, restrita aos IDs já presentes nas reservas e ao realm `bibliogest`, após backup. A aplicação em execução não recebe credenciais administrativas nem consulta o banco ou a API administrativa do Keycloak.
+
+As permissões continuam iguais: leitor consulta suas próprias reservas e bibliotecário consulta o balcão. O frontend mostra o nome do solicitante e mantém o ID técnico fora da apresentação. Os testes cobrem nome vindo do token, tentativa de forjá-lo no corpo, Unicode, nome ausente, consulta por outro bibliotecário, persistência no PostgreSQL e migration sobre uma reserva existente.
