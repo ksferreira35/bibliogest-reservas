@@ -20,6 +20,9 @@ public class Reserva {
     @Column(name = "leitor_id", nullable = false, updatable = false)
     private String leitorId;
 
+    @Column(name = "leitor_nome", length = 255, updatable = false)
+    private String leitorNome;
+
     @Column(name = "obra_id", nullable = false, updatable = false)
     private String obraId;
 
@@ -49,9 +52,10 @@ public class Reserva {
     protected Reserva() {
     }
 
-    public Reserva(String leitorId, String obraId, String exemplarId, Instant agora) {
+    public Reserva(String leitorId, String leitorNome, String obraId, String exemplarId, Instant agora) {
         this.id = UUID.randomUUID();
         this.leitorId = leitorId;
+        this.leitorNome = leitorNome;
         this.obraId = obraId;
         this.exemplarId = exemplarId;
         this.estado = EstadoReserva.AGUARDANDO_RETIRADA;
@@ -83,6 +87,7 @@ public class Reserva {
     }
 
     public UUID getId() { return id; }
+    public String getLeitorNome() { return leitorNome; }
     public String getLeitorId() { return leitorId; }
     public String getObraId() { return obraId; }
     public String getExemplarId() { return exemplarId; }

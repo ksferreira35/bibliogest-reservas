@@ -46,7 +46,7 @@ class ReservaServiceTest {
         when(acervo.exemplarPertenceAObra("o1", "e1", "tok")).thenReturn(true);
         when(repository.saveAndFlush(any(Reserva.class))).thenAnswer(i -> i.getArgument(0));
 
-        var r = service.criar("leitor", "o1", "e1", "tok");
+        var r = service.criar("leitor", null, "o1", "e1", "tok");
 
         assertThat(r.getEstado()).isEqualTo(EstadoReserva.AGUARDANDO_RETIRADA);
         assertThat(r.getLeitorId()).isEqualTo("leitor");
@@ -56,7 +56,7 @@ class ReservaServiceTest {
     void recusaSemGravarQuandoExemplarNaoExiste() {
         when(acervo.exemplarPertenceAObra("o1", "e1", "tok")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.criar("leitor", "o1", "e1", "tok"))
+        assertThatThrownBy(() -> service.criar("leitor", null, "o1", "e1", "tok"))
             .isInstanceOf(ExemplarNaoEncontradoException.class);
         verify(repository, never()).saveAndFlush(any());
     }
@@ -66,7 +66,7 @@ class ReservaServiceTest {
         when(acervo.exemplarPertenceAObra("o1", "e1", "tok"))
             .thenThrow(new AcervoIndisponivelException("fora", new RuntimeException()));
 
-        assertThatThrownBy(() -> service.criar("leitor", "o1", "e1", "tok"))
+        assertThatThrownBy(() -> service.criar("leitor", null, "o1", "e1", "tok"))
             .isInstanceOf(AcervoIndisponivelException.class);
         verify(repository, never()).saveAndFlush(any());
     }
@@ -76,13 +76,13 @@ class ReservaServiceTest {
         when(acervo.exemplarPertenceAObra("o1", "e1", "tok")).thenReturn(true);
         when(repository.saveAndFlush(any(Reserva.class))).thenThrow(new DataIntegrityViolationException("dup"));
 
-        assertThatThrownBy(() -> service.criar("leitor", "o1", "e1", "tok"))
+        assertThatThrownBy(() -> service.criar("leitor", null, "o1", "e1", "tok"))
             .isInstanceOf(ExemplarIndisponivelException.class);
     }
 
     @Test
     void leitorNaoVeReservaDeOutroLeitor() {
-        var r = new Reserva("dono", "o1", "e1", Instant.now());
+        var r = new Reserva("dono", null, "o1", "e1", Instant.now());
         when(repository.findById(r.getId())).thenReturn(Optional.of(r));
 
         assertThatThrownBy(() -> service.buscar(r.getId(), "intruso", false))
@@ -93,7 +93,7 @@ class ReservaServiceTest {
 
     @Test
     void leitorNaoCancelaReservaDeOutro() {
-        var r = new Reserva("dono", "o1", "e1", Instant.now());
+        var r = new Reserva("dono", null, "o1", "e1", Instant.now());
         when(repository.findById(r.getId())).thenReturn(Optional.of(r));
 
         assertThatThrownBy(() -> service.cancelar(r.getId(), "intruso", false))
@@ -103,8 +103,8 @@ class ReservaServiceTest {
 
     @Test
     void donoCancelaEBibliotecarioTambem() {
-        var r1 = new Reserva("dono", "o1", "e1", Instant.now());
-        var r2 = new Reserva("dono", "o1", "e2", Instant.now());
+        var r1 = new Reserva("dono", null, "o1", "e1", Instant.now());
+        var r2 = new Reserva("dono", null, "o1", "e2", Instant.now());
         when(repository.findById(r1.getId())).thenReturn(Optional.of(r1));
         when(repository.findById(r2.getId())).thenReturn(Optional.of(r2));
         when(repository.saveAndFlush(any(Reserva.class))).thenAnswer(i -> i.getArgument(0));

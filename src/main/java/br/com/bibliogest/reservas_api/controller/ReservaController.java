@@ -34,7 +34,7 @@ public class ReservaController {
     @PostMapping
     public ResponseEntity<ReservaResponse> criar(@Valid @RequestBody CriarReservaRequest req, Authentication auth) {
         var jwt = (Jwt) auth.getPrincipal();
-        var reserva = service.criar(jwt.getSubject(), req.obraId(), req.exemplarId(), jwt.getTokenValue());
+        var reserva = service.criar(jwt.getSubject(), nomeDoLeitor(jwt), req.obraId(), req.exemplarId(), jwt.getTokenValue());
         return ResponseEntity.created(URI.create("/reservas/api/v1/reservas/" + reserva.getId()))
             .body(ReservaResponse.de(reserva));
     }
@@ -75,6 +75,23 @@ public class ReservaController {
     @PreAuthorize("hasRole('BIBLIOTECARIO')")
     public ReservaResponse devolucao(@PathVariable UUID id) {
         return ReservaResponse.de(service.finalizar(id));
+    }
+
+    private static String nomeDoLeitor(Jwt jwt) {
+        String nome = texto(jwt, "name");
+        if (nome.isEmpty()) {
+            nome = (texto(jwt, "given_name") + " " + texto(jwt, "family_name")).strip();
+        }
+        if (nome.isEmpty()) {
+            return null;
+        }
+        int fim = nome.offsetByCodePoints(0, Math.min(255, nome.codePointCount(0, nome.length())));
+        return nome.substring(0, fim);
+    }
+
+    private static String texto(Jwt jwt, String claim) {
+        Object valor = jwt.getClaims().get(claim);
+        return valor instanceof String texto ? texto.strip().replaceAll("\\s+", " ") : "";
     }
 
     private static boolean bibliotecario(Authentication auth) {
