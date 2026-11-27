@@ -104,3 +104,133 @@ A migration `V2__add_nome_leitor_to_reserva.sql` acrescenta `leitor_nome`, com a
 A coluna aceita `null` para preservar reservas anteriores. No deploy desta mudança, os nomes antigos podem ser preenchidos por uma rotina administrativa pontual, restrita aos IDs já presentes nas reservas e ao realm `bibliogest`, após backup. A aplicação em execução não recebe credenciais administrativas nem consulta o banco ou a API administrativa do Keycloak.
 
 As permissões continuam iguais: leitor consulta suas próprias reservas e bibliotecário consulta o balcão. O frontend mostra o nome do solicitante e mantém o ID técnico fora da apresentação. Os testes cobrem nome vindo do token, tentativa de forjá-lo no corpo, Unicode, nome ausente, consulta por outro bibliotecário, persistência no PostgreSQL e migration sobre uma reserva existente.
+
+## Arquitetura do BiblioGest
+
+O BiblioGest é uma aplicação de gestão de bibliotecas baseada em microsserviços REST. Cada serviço tem uma responsabilidade e persistência próprias. O Keycloak centraliza identidade e autenticação; a integração entre serviços ocorre por HTTP, sem compartilhar entidades JPA ou consultar diretamente o banco de outro microsserviço.
+
+```mermaid
+flowchart LR
+  B[Navegador] -->|HTTPS| CF[Cloudflare]
+  CF --> T[Traefik no RKE2]
+  T --> F[React / Nginx]
+  T --> A[API Acervo]
+  T --> R[API Reservas]
+  T --> U[API Usuarios]
+  T --> K[Keycloak]
+  R -->|HTTP REST interno| A
+  U -->|Administracao autorizada| K
+  A --> DA[(Banco Acervo)]
+  R --> DR[(Banco Reservas)]
+  U --> DU[(Banco Auditoria)]
+  K --> DK[(Banco Keycloak)]
+  A --> PVC[(PVC Capas)]
+```
+
+Os bancos lógicos são independentes, hospedados na instância PostgreSQL do projeto. As capas ficam em volume persistente; o banco de Acervo guarda a referência. O ambiente usa Docker para construção de imagens, containerd e Kubernetes RKE2 para execução, Rancher para gerenciamento, Traefik para roteamento, Nginx para frontend e Cloudflare na borda. GitHub Actions executa validações e build; o deploy é uma operação separada. O pgAdmin é ferramenta de administração do banco, não parte do acesso do leitor.
+
+| Componente | Responsabilidade | Repositório |
+| --- | --- | --- |
+| Frontend | Catálogo, reservas, balcão e administração | [bibliogest-frontend](https://github.com/ksferreira35/bibliogest-frontend) |
+| Acervo | Obras, autores, categorias, exemplares e capas | [bibliogest-acervo](https://github.com/ksferreira35/bibliogest-acervo) |
+| Reservas | Disponibilidade e circulação dos exemplares | [bibliogest-reservas](https://github.com/ksferreira35/bibliogest-reservas) |
+| Usuários | Administração de contas e auditoria | [bibliogest-usuarios](https://github.com/ksferreira35/bibliogest-usuarios) |
+
+## Organização interna e persistência
+
+Java 21, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway. ReservaController e DisponibilidadeController entregam os contratos REST; ReservaService aplica regras, ReservaRepository persiste as reservas; HttpAcervoClient integra com o catálogo. O banco não duplica obras, exemplares ou contas do Keycloak.
+
+### Modelo de dados
+
+```mermaid
+erDiagram
+ RESERVA {
+   UUID id PK
+   VARCHAR leitor_id
+   VARCHAR leitor_nome
+   VARCHAR obra_id
+   VARCHAR exemplar_id
+   VARCHAR estado
+   TIMESTAMPTZ criada_em
+   TIMESTAMPTZ retirada_em
+   TIMESTAMPTZ finalizada_em
+   TIMESTAMPTZ cancelada_em
+   BIGINT versao
+ }
+```
+
+| Coluna | Tipo e finalidade |
+| --- | --- |
+| id | UUID, chave primária |
+| leitor_id | VARCHAR(64), identificador obrigatório da claim sub |
+| leitor_nome | VARCHAR(255), nome opcional registrado no momento da solicitação |
+| obra_id, exemplar_id | VARCHAR(64), referências obrigatórias aos recursos do Acervo; sem FK entre bancos independentes |
+| estado | VARCHAR(20), obrigatório; CHECK restringe estados válidos |
+| criada_em | TIMESTAMPTZ, obrigatório |
+| retirada_em, finalizada_em, cancelada_em | TIMESTAMPTZ, opcionais conforme transição |
+| versao | BIGINT, obrigatório, padrão 0; controle de concorrência |
+
+O índice único parcial ux_reserva_exemplar_ativa garante no máximo uma reserva ativa por exemplar (AGUARDANDO_RETIRADA ou RETIRADA). Índices por leitor/data e estado/data apoiam consultas. V1 cria tabela e índices; V2 acrescenta leitor_nome sem descartar dados anteriores. Arquivos: [migrations](src/main/resources/db/migration).
+
+### Ciclo de circulação
+
+```mermaid
+stateDiagram-v2
+ [*] --> AGUARDANDO_RETIRADA
+ AGUARDANDO_RETIRADA --> RETIRADA: bibliotecario
+ AGUARDANDO_RETIRADA --> CANCELADA: dono ou bibliotecario
+ RETIRADA --> FINALIZADA: bibliotecario
+ CANCELADA --> [*]
+ FINALIZADA --> [*]
+```
+
+### SQL Injection e integração
+
+ReservaRepository usa métodos Spring Data JPA e consultas JPQL com parâmetros nomeados, inclusive filtragem por IDs de exemplares e estados. Os dados de entrada não são interpolados em SQL. A API valida JWT com audiência bibliogest-reservas e verifica o dono pelo sub do token.
+
+Para consultar disponibilidade, Reservas busca exemplares do Acervo e desconta os que estão bloqueados por reservas ativas. A integração usa HTTP interno configurado por ambiente; os contratos são testados com provedor simulado. O banco de Reservas continua sendo a fonte da circulação. Manifests compartilhados estão no repositório Acervo.
+
+## Matriz de permissões
+
+As roles são atribuídas no Keycloak e verificadas nas APIs. Uma conta pode acumular roles; ADMINISTRADOR por si só não equivale a LEITOR ou BIBLIOTECARIO.
+
+| Operação | LEITOR | BIBLIOTECARIO | ADMINISTRADOR |
+| --- | --- | --- | --- |
+| Consultar catálogo e disponibilidade | Sim | Sim | Se também leitor/bibliotecário |
+| Criar reserva pessoal | Sim | Se também leitor | Se também leitor |
+| Consultar reservas próprias | Sim | Sim | Se também leitor/bibliotecário |
+| Cancelar reserva aguardando retirada | Própria | Sim | Conforme outras roles |
+| Consultar balcão, registrar retirada/devolução | Não | Sim | Se também bibliotecário |
+| Cadastrar e editar acervo | Não | Sim | Se também bibliotecário |
+| Administrar contas e consultar auditoria | Não | Não | Sim |
+
+A ausência de autenticação válida leva a 401; uma role insuficiente leva a 403. Consultas a reservas de terceiros sem autorização devolvem 404 conforme o contrato. IDs técnicos identificam recursos; não substituem autorização.
+
+## Segurança em camadas
+
+| Controle | Implementação e finalidade |
+| --- | --- |
+| Autenticação | Keycloak, OAuth 2.0/OIDC, PKCE S256 no frontend; tokens JWT Bearer nas APIs. |
+| Autorização | Spring Security verifica assinatura, emissor, audiência e expiração; roles e propriedade dos recursos são avaliadas no backend. |
+| SQL Injection | Dados de entrada são tratados como valores tipados em consultas parametrizadas nos repositories, não como trechos de SQL. Validação de entrada complementa essa proteção. |
+| XSS | React renderiza conteúdo textual com escape; CSP no Nginx limita recursos autorizados no navegador. |
+| CSRF | As APIs são stateless e autorizam via Bearer explícito, não por cookie de sessão enviado automaticamente. CSRF do Spring está desativado para esse modelo. Isso não elimina os controles do Keycloak no login. |
+| CORS | APIs e frontend usam a mesma origem pública; os caminhos são roteados pelo Ingress. Vite usa proxy no desenvolvimento. Web Origins do Keycloak é configurado no cliente, sem liberação genérica. CORS não substitui autenticação. |
+| Clickjacking | Nginx envia X-Frame-Options DENY e CSP frame-ancestors none. |
+| Transporte | HTTPS público, HSTS no frontend e Cloudflare na borda. |
+| Segredos e rede | Credenciais via ambiente/Secrets, banco e serviços internos com escopo de rede e contas separadas. Swagger fica desabilitado em produção. |
+
+Esses controles reduzem riscos, mas não constituem certificação de ausência de vulnerabilidades. O projeto mantém testes defensivos, validação e revisão dos contratos. Não use produção nem credenciais reais em testes automatizados.
+
+## Skills para agentes de IA
+As skills estão em `.agents/skills/`. Cada pasta contém um `SKILL.md` com contexto, regras e orientação de manutenção. São instruções de desenvolvimento para agentes, não funcionalidades de IA em execução no sistema.
+
+| Skill | Finalidade |
+| --- | --- |
+| [reservas-circulacao](.agents/skills/reservas-circulacao/SKILL.md) | Implementar regras de criação, cancelamento, retirada, devolução e consulta de reservas. |
+| [reservas-deploy-docker](.agents/skills/reservas-deploy-docker/SKILL.md) | Preparar imagem de Reservas e integração de deploy com manifests compartilhados do Acervo. |
+| [reservas-integracao-acervo](.agents/skills/reservas-integracao-acervo/SKILL.md) | Manter DisponibilidadeController, AcervoClient e HttpAcervoClient, integração HTTP e cálculo de exemplares livres. |
+| [reservas-postgres-flyway](.agents/skills/reservas-postgres-flyway/SKILL.md) | Manter persistência PostgreSQL, schema e migrations Flyway da API de reservas. |
+| [reservas-seguranca-jwt](.agents/skills/reservas-seguranca-jwt/SKILL.md) | Manter autenticação e autorização defensiva Spring Security/Keycloak na API de reservas. |
+| [reservas-spring-boot](.agents/skills/reservas-spring-boot/SKILL.md) | Implementar controllers, DTOs, serviços e tratamento de erros Java/Spring Boot da API de reservas. |
+| [reservas-testes-ci](.agents/skills/reservas-testes-ci/SKILL.md) | Validar a API de reservas com JUnit, MockMvc, Mockito, Checkstyle, JaCoCo e GitHub Actions. |
